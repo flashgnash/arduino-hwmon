@@ -37,6 +37,17 @@
             pkg-config
             udev
 
+            arduino-cli
+            (pkgs.writeShellScriptBin "run" (''
+              cd arduino
+              arduino-cli core install arduino:avr
+              arduino-cli lib install LedControl
+              arduino-cli compile -b arduino:avr:uno
+              arduino-cli upload -b arduino:avr:uno -p /dev/ttyACM0
+              cargo run
+
+            ''))
+
             cachix
 
             crate2nix

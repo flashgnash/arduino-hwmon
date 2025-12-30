@@ -79,32 +79,34 @@ int parse2(const String& s, int idx) {
 void loop() {
   if (!Serial.available()) return;
 
-  String l1 = Serial.readStringUntil('\n');
-  String l2 = Serial.readStringUntil('\n');
+  String line = Serial.readStringUntil('\n');
+  line.trim();
 
-  lc.clearDisplay(0);
-  lc.clearDisplay(1);
+  // ---- CPU + MEM ----
+  if (line.startsWith("CPU")) {
+    int cpuPos = line.indexOf("CPU ");
+    int memPos = line.indexOf("MEM ");
 
-  // ---- CPU + MEM line ----
-  if (l1.startsWith("CPU")) {
-    int cpu = parse2(l1, 4);   // CPU XX
-    int mem = parse2(l1, 10);  // MEM YY
-
-    if (cpu >= 0) {
-      lc.setDigit(0, 5, cpu / 10, false);
-      lc.setDigit(0, 4, cpu % 10, false);
+    if (cpuPos >= 0) {
+      int cpu = parse2(line, cpuPos + 4);
+      if (cpu >= 0) {
+        lc.setDigit(0, 5, cpu / 10, false);
+        lc.setDigit(0, 4, cpu % 10, false);
+      }
     }
 
-    if (mem >= 0) {
-      lc.setDigit(0, 1, mem / 10, false);
-      lc.setDigit(0, 2, mem % 10, false);
+    if (memPos >= 0) {
+      int mem = parse2(line, memPos + 4);
+      if (mem >= 0) {
+        lc.setDigit(0, 2, mem / 10, false);
+        lc.setDigit(0, 1, mem % 10, false);
+      }
     }
   }
 
-  // ---- TEMP line ----
-  if (l2.startsWith("TMP")) {
-    int tmp = parse2(l2, 4);   // TMP ZZ
-
+  // ---- TEMP ----
+  if (line.startsWith("TMP")) {
+    int tmp = parse2(line, 4);
     if (tmp >= 0) {
       lc.setDigit(1, 5, tmp / 10, false);
       lc.setDigit(1, 4, tmp % 10, false);
