@@ -45,6 +45,7 @@ void setup() {
   setupDisplay(0);
   setupDisplay(1);
 
+
   Serial.begin(9600);
   Serial.setTimeout(50);
 }
@@ -62,21 +63,28 @@ void loop() {
   int tmpPos = line.indexOf("TMP ");
 
   if (cpuPos >= 0) {
+
+    lc.setRow(0,7,0x4E);
     int v = parse3(line, cpuPos + 4);
     if (v >= 0) show3(0, 6, 5, 4, v);
   }
 
   if (memPos >= 0) {
+
+    lc.setRow(0, 3, 0x46); // display 0, digit 3
     int v = parse3(line, memPos + 4);
     if (v >= 0) show3(0, 2, 1, 0, v);
   }
 
   if (gpuPos >= 0) {
+    lc.setRow(1,3,0x3E);
+
     int v = parse3(line, gpuPos + 4);
     if (v >= 0) show3(1, 2, 1, 0, v);
   }
 
   if (tmpPos >= 0) {
+    lc.setChar(1, 7, 'H', false); 
     int v = parse3(line, tmpPos + 4);
     if (v >= 0) show3(1, 6, 5, 4, v);
   }

@@ -38,14 +38,22 @@
             udev
 
             arduino-cli
-            (pkgs.writeShellScriptBin "run" (''
+
+            (pkgs.writeShellScriptBin "runArduino" (''
               cd arduino
               arduino-cli core install arduino:avr
               arduino-cli lib install LedControl
               arduino-cli compile -b arduino:avr:uno
               arduino-cli upload -b arduino:avr:uno -p /dev/ttyACM0
-              cargo run
 
+            ''))
+            (pkgs.writeShellScriptBin "runSender" (''
+              cargo run
+            ''))
+
+            (pkgs.writeShellScriptBin "run" (''
+              runArduino
+              runSender
             ''))
 
             cachix
