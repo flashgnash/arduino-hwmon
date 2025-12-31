@@ -1,10 +1,9 @@
 {
-  description = "Rust application";
+  description = "Arduino hwmon sender";
 
   inputs = {
     nixpkgs.url = "nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-
   };
 
   outputs =
@@ -13,83 +12,71 @@
       nixpkgs,
       flake-utils,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    let
+      systems = flake-utils.lib.defaultSystems;
+    in
+    {
+      # ---------- NixOS module (TOP-LEVEL, NOT per-system)
+      nixosModules.default =
+        {
+          pkgs,
+          lib,
+          config,
+          ...
+        }:
+        let
+          cfg = config.services.hwmon;
+        in
+        {
+          options.services.hwmon.enable = lib.mkEnableOption "hwmon sender service";
+
+          config = lib.mkIf cfg.enable {
+            systemd.services.hwmon = {
+              description = "Arduino hwmon sender";
+              wantedBy = [ "multi-user.target" ];
+              after = [ "network.target" ];
+
+              serviceConfig = {
+                ExecStart = "${self.packages.${pkgs.system}.default}/bin/hwmon_sender";
+                Restart = "always";
+              };
+            };
+          };
+        };
+    }
+    // flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-
-        buildPkgs = with pkgs; [
-          rustc
-          cargo
-          pkg-config
-          udev
-        ];
       in
       {
-        devShells.default = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
-          buildInputs =
-            with pkgs;
-            [
-
-              rustfmt
-              rust-analyzer
-              clippy
-
-              arduino-cli
-
-              (pkgs.writeShellScriptBin "runArduino" (''
-                cd arduino
-                arduino-cli core install arduino:avr
-                arduino-cli lib install LedControl
-                arduino-cli compile -b arduino:avr:uno
-                arduino-cli upload -b arduino:avr:uno -p /dev/ttyACM0
-
-              ''))
-              (pkgs.writeShellScriptBin "runSender" (''
-                cargo run
-              ''))
-
-              (pkgs.writeShellScriptBin "run" (''
-                runArduino
-                runSender
-              ''))
-
-              cachix
-
-            ]
-            ++ buildPkgs;
-
-          OUT_DIR = "./src/db";
-          RUST_BACKTRACE = "full";
-        };
-
-        nixosModules.default =
-          { pkgs, ... }:
-          {
-            environment.systemPackages = [ self.packages.${pkgs.system}.default ];
-          };
-
+        # ---------- Package
         packages.default = pkgs.rustPlatform.buildRustPackage {
           pname = "hwmon_sender";
           version = "0.0.1";
           src = ./.;
-          cargoBuildFlags = "-p hwmon_sender";
 
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
+          cargoLock.lockFile = ./Cargo.lock;
 
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-          ];
-          buildInputs = buildPkgs;
-          PKG_CONFIG_PATH = "${pkgs.dbus.dev}/lib/pkgconfig";
-
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.udev ];
         };
 
+        # ---------- Dev shell
+        devShells.default = pkgs.mkShell {
+          buildInputs = [
+            pkgs.rustc
+            pkgs.cargo
+            pkgs.rustfmt
+            pkgs.rust-analyzer
+            pkgs.clippy
+            pkgs.pkg-config
+            pkgs.udev
+            pkgs.arduino-cli
+          ];
+
+          RUST_BACKTRACE = "full";
+        };
       }
     );
 }
