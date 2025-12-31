@@ -47,6 +47,7 @@ void setup() {
   delay(1000);
 
   Serial.begin(9600);
+  Serial.setTimeout(50);
   Serial.println("Hello world");
 
   // setNumber(12345678, 0, 0);
@@ -76,41 +77,50 @@ int parse2(const String& s, int idx) {
   return (a - '0') * 10 + (b - '0');
 }
 
+
 void loop() {
   if (!Serial.available()) return;
 
-  String line = Serial.readStringUntil('\n');
+  String line = Serial.readStringUntil(';');
   line.trim();
 
-  // ---- CPU + MEM ----
-  if (line.startsWith("CPU")) {
-    int cpuPos = line.indexOf("CPU ");
-    int memPos = line.indexOf("MEM ");
+  
+  // ---- CPU + MEM + GPU ----
+  int cpuPos = line.indexOf("CPU ");
+  int memPos = line.indexOf("MEM ");
+  int gpuPos = line.indexOf("GPU ");
 
-    if (cpuPos >= 0) {
-      int cpu = parse2(line, cpuPos + 4);
-      if (cpu >= 0) {
-        lc.setDigit(0, 5, cpu / 10, false);
-        lc.setDigit(0, 4, cpu % 10, false);
-      }
+  if (cpuPos >= 0) {
+    int cpu = parse2(line, cpuPos + 4);
+    if (cpu >= 0) {
+      lc.setDigit(0, 5, cpu / 10, false);
+      lc.setDigit(0, 4, cpu % 10, false);
     }
+  }
 
-    if (memPos >= 0) {
-      int mem = parse2(line, memPos + 4);
-      if (mem >= 0) {
-        lc.setDigit(0, 2, mem / 10, false);
-        lc.setDigit(0, 1, mem % 10, false);
-      }
+  if (memPos >= 0) {
+    int mem = parse2(line, memPos + 4);
+    if (mem >= 0) {
+      lc.setDigit(0, 2, mem / 10, false);
+      lc.setDigit(0, 1, mem % 10, false);
+    }
+  }
+
+  if (gpuPos >= 0) {
+    int gpu = parse2(line, gpuPos + 4);
+    if (gpu >= 0) {
+      lc.setDigit(1, 2, gpu / 10, false);
+      lc.setDigit(1, 1, gpu % 10, false);
     }
   }
 
   // ---- TEMP ----
-  if (line.startsWith("TMP")) {
-    int tmp = parse2(line, 4);
+  int tmpPos = line.indexOf("TMP ");
+  if (tmpPos >= 0) {
+    int tmp = parse2(line, tmpPos + 4);
     if (tmp >= 0) {
       lc.setDigit(1, 5, tmp / 10, false);
       lc.setDigit(1, 4, tmp % 10, false);
     }
   }
 }
-
