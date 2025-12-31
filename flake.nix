@@ -36,7 +36,7 @@
 
               bindsTo = [ "dev-ttyACM0.device" ];
               after = [ "dev-ttyACM0.device" ];
-              wantedBy = [ "multi-user.target" ];
+              wantedBy = [ "dev-ttyACM0.device" ];
 
               serviceConfig = {
                 ExecStart = "${self.packages.${pkgs.system}.default}/bin/hwmon_sender";
