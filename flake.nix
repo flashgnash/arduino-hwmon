@@ -34,7 +34,9 @@
             systemd.services.hwmon = {
               description = "Arduino hwmon sender";
               wantedBy = [ "multi-user.target" ];
-              after = [ "network.target" ];
+
+              bindsTo = [ "dev-ttyACM0.device" ];
+              after = [ "dev-ttyACM0.device" ];
 
               serviceConfig = {
                 ExecStart = "${self.packages.${pkgs.system}.default}/bin/hwmon_sender";
