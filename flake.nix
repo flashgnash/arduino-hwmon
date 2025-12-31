@@ -34,8 +34,8 @@
             systemd.services.hwmon = {
               description = "Arduino hwmon sender";
 
-              bindsTo = [ "dev-arduino-hwmon.device" ];
-              after = [ "dev-arduino-hwmon.device" ];
+              bindsTo = [ "dev-ttyACM0.device" ];
+              after = [ "dev-ttyACM0.device" ];
               wantedBy = [ "multi-user.target" ];
 
               serviceConfig = {
