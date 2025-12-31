@@ -33,7 +33,7 @@ rec {
   #
 
   rootCrate = rec {
-    packageId = "hwmon-sender";
+    packageId = "hwmon_sender";
 
     # Use this attribute to refer to the derivation building your root crate package.
     # You can override the features with rootCrate.build.override { features = [ "default" "feature1" ... ]; }.
@@ -49,10 +49,10 @@ rec {
   # You can override the features with
   # workspaceMembers."${crateName}".build.override { features = [ "default" "feature1" ... ]; }.
   workspaceMembers = {
-    "hwmon-sender" = rec {
-      packageId = "hwmon-sender";
+    "hwmon_sender" = rec {
+      packageId = "hwmon_sender";
       build = internal.buildRustCrateWithFeatures {
-        packageId = "hwmon-sender";
+        packageId = "hwmon_sender";
       };
 
       # Debug support which might change between releases.
@@ -174,13 +174,13 @@ rec {
         };
         resolvedDefaultFeatures = [ "default" "link" ];
       };
-      "hwmon-sender" = rec {
-        crateName = "hwmon-sender";
+      "hwmon_sender" = rec {
+        crateName = "hwmon_sender";
         version = "0.1.0";
         edition = "2024";
         crateBin = [
           {
-            name = "hwmon-sender";
+            name = "hwmon_sender";
             path = "src/main.rs";
             requiredFeatures = [ ];
           }

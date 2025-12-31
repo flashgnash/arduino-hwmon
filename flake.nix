@@ -79,19 +79,33 @@
             environment.systemPackages = [ self.packages.${pkgs.system}.default ];
           };
 
-        packages.default = rustPkgs.workspaceMembers."hwmon-sender".build.overrideAttrs (old: {
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
-          OUT_DIR = "./src/db";
-          RUST_BACKTRACE = "full";
+        packages.${system}.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "hwmon_sender";
+          version = "0.0.1";
+          src = ./.;
+          cargoBuildFlags = "-p hwmon_sender";
 
-          # preBuild = ''
-          #   pkgs.crate2nix generate
-          # '';
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
 
-          buildInputs = old.buildInputs or [ ] ++ [
-
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            openssl.dev
+            sqlite
           ];
-        });
+          PKG_CONFIG_PATH = "${pkgs.dbus.dev}/lib/pkgconfig";
+
+          buildPhase = ''
+            cargo build
+          '';
+
+          installPhase = ''
+            mkdir -p $out/bin
+            cp target/debug/hwmon_sender $out/bin
+          '';
+
+        };
 
       }
     );
