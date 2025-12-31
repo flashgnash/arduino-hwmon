@@ -43,7 +43,7 @@ fn main() {
             .unwrap_or(0);
 
         let out = format!(
-            "CPU {:02} MEM {:02} TMP {:02} GPU {:02};",
+            "CPU {:03} MEM {:03} TMP {:03} GPU {:03};",
             cpu, mem, temp, gpu
         );
 
