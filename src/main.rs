@@ -18,6 +18,29 @@ fn read_gpu_busy() -> u8 {
         .unwrap_or(0)
 }
 
+fn read_cpu_temp() -> f64 {
+    let mut temps = Vec::new();
+
+    if let Ok(paths) = std::fs::read_dir("/sys/class/hwmon/hwmon0") {
+        for entry in paths.flatten() {
+            let name = entry.file_name().into_string().unwrap_or_default();
+            if name.starts_with("temp") && name.ends_with("_input") {
+                if let Ok(content) = std::fs::read_to_string(entry.path()) {
+                    if let Ok(t) = content.trim().parse::<f64>() {
+                        temps.push(t / 1000.0);
+                    }
+                }
+            }
+        }
+    }
+
+    if temps.is_empty() {
+        0.0
+    } else {
+        temps.iter().sum::<f64>() / temps.len() as f64
+    }
+}
+
 fn main() {
     let mut sys = System::new_all();
     let mut comps = Components::new();
@@ -36,11 +59,7 @@ fn main() {
         let mem = (sys.used_memory() * 100 / sys.total_memory()) as u8;
         let gpu = read_gpu_busy();
 
-        let temp = std::fs::read_to_string("/sys/class/thermal/thermal_zone0/temp")
-            .ok()
-            .and_then(|s| s.trim().parse::<i32>().ok())
-            .map(|t| (t / 1000) as u8)
-            .unwrap_or(0);
+        let temp = read_cpu_temp().round();
 
         let out = format!(
             "CPU {:03} MEM {:03} TMP {:03} GPU {:03};",
