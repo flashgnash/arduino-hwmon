@@ -73,7 +73,13 @@
           RUST_BACKTRACE = "full";
         };
 
-      packages.${system}.default = pkgs.rustPlatform.buildRustPackage {
+        nixosModules.default =
+          { pkgs, ... }:
+          {
+            environment.systemPackages = [ self.packages.${pkgs.system}.default ];
+          };
+
+        packages.default = rustPkgs.workspaceMembers."hwmon-sender".build.overrideAttrs (old: {
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
           OUT_DIR = "./src/db";
           RUST_BACKTRACE = "full";
