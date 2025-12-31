@@ -17,18 +17,31 @@ void setupDisplay(int d) {
 // ---- PARSE 3 DIGITS ----
 int parse3(const String& s, int idx) {
   if (idx + 2 >= s.length()) return -1;
-  char a = s[idx];
-  char b = s[idx + 1];
-  char c = s[idx + 2];
-  if (a < '0' || a > '9') return -1;
-  if (b < '0' || b > '9') return -1;
-  if (c < '0' || c > '9') return -1;
+  char a = s[idx], b = s[idx+1], c = s[idx+2];
+  if (!isDigit(a) || !isDigit(b) || !isDigit(c)) return -1;
   return (a - '0') * 100 + (b - '0') * 10 + (c - '0');
 }
 
-void setup() {
-  delay(500);
+// ---- DISPLAY 3 DIGITS WITH LEADING ZERO BLANK ----
+void show3(int disp, int d2, int d1, int d0, int val) {
+  int h = val / 100;
+  int t = (val / 10) % 10;
+  int o = val % 10;
 
+  if (h == 0)
+    lc.setChar(disp, d2, ' ', false);
+  else
+    lc.setDigit(disp, d2, h, false);
+
+  if (h == 0 && t == 0)
+    lc.setChar(disp, d1, ' ', false);
+  else
+    lc.setDigit(disp, d1, t, false);
+
+  lc.setDigit(disp, d0, o, false);
+}
+
+void setup() {
   setupDisplay(0);
   setupDisplay(1);
 
@@ -48,43 +61,23 @@ void loop() {
   int gpuPos = line.indexOf("GPU ");
   int tmpPos = line.indexOf("TMP ");
 
-  // ---- CPU (display 0, right) ----
   if (cpuPos >= 0) {
-    int cpu = parse3(line, cpuPos + 4);
-    if (cpu >= 0) {
-      lc.setDigit(0, 6, cpu / 100, false);
-      lc.setDigit(0, 5, (cpu / 10) % 10, false);
-      lc.setDigit(0, 4, cpu % 10, false);
-    }
+    int v = parse3(line, cpuPos + 4);
+    if (v >= 0) show3(0, 6, 5, 4, v);
   }
 
-  // ---- MEM (display 0, left) ----
   if (memPos >= 0) {
-    int mem = parse3(line, memPos + 4);
-    if (mem >= 0) {
-      lc.setDigit(0, 2, mem / 100, false);
-      lc.setDigit(0, 1, (mem / 10) % 10, false);
-      lc.setDigit(0, 0, mem % 10, false);
-    }
+    int v = parse3(line, memPos + 4);
+    if (v >= 0) show3(0, 2, 1, 0, v);
   }
 
-  // ---- GPU (display 1, SAME AS MEM) ----
   if (gpuPos >= 0) {
-    int gpu = parse3(line, gpuPos + 4);
-    if (gpu >= 0) {
-      lc.setDigit(1, 2, gpu / 100, false);
-      lc.setDigit(1, 1, (gpu / 10) % 10, false);
-      lc.setDigit(1, 0, gpu % 10, false);
-    }
+    int v = parse3(line, gpuPos + 4);
+    if (v >= 0) show3(1, 2, 1, 0, v);
   }
 
-  // ---- TEMP (display 1, right) ----
   if (tmpPos >= 0) {
-    int tmp = parse3(line, tmpPos + 4);
-    if (tmp >= 0) {
-      lc.setDigit(1, 6, tmp / 100, false);
-      lc.setDigit(1, 5, (tmp / 10) % 10, false);
-      lc.setDigit(1, 4, tmp % 10, false);
-    }
+    int v = parse3(line, tmpPos + 4);
+    if (v >= 0) show3(1, 6, 5, 4, v);
   }
 }
