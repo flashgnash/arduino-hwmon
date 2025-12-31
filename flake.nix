@@ -29,8 +29,10 @@
             pkg-config
           ];
           buildInputs = with pkgs; [
+
             rustc
             cargo
+            crate2nix
             rustfmt
             rust-analyzer
             clippy
@@ -71,7 +73,7 @@
           RUST_BACKTRACE = "full";
         };
 
-        packages.default = rustPkgs.workspaceMembers."ordis".build.overrideAttrs (old: rec {
+      packages.${system}.default = pkgs.rustPlatform.buildRustPackage {
           PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
           OUT_DIR = "./src/db";
           RUST_BACKTRACE = "full";
@@ -81,8 +83,7 @@
           # '';
 
           buildInputs = old.buildInputs or [ ] ++ [
-            pkgs.sqlite
-            pkgs.openssl.dev
+
           ];
         });
 
