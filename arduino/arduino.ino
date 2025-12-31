@@ -22,23 +22,26 @@ int parse3(const String& s, int idx) {
   return (a - '0') * 100 + (b - '0') * 10 + (c - '0');
 }
 
-// ---- DISPLAY 3 DIGITS WITH LEADING ZERO BLANK ----
-void show3(int disp, int d2, int d1, int d0, int val) {
+// Display 3-digit number aligned left starting at "start" digit
+void show3(int disp, int start, int val) {
   int h = val / 100;
   int t = (val / 10) % 10;
   int o = val % 10;
 
-  if (h == 0)
-    lc.setChar(disp, d2, ' ', false);
-  else
-    lc.setDigit(disp, d2, h, false);
-
-  if (h == 0 && t == 0)
-    lc.setChar(disp, d1, ' ', false);
-  else
-    lc.setDigit(disp, d1, t, false);
-
-  lc.setDigit(disp, d0, o, false);
+  // Decide which digits to write based on value
+  if (h > 0) {
+    lc.setDigit(disp, start, h, false);
+    lc.setDigit(disp, start + 1, t, false);
+    lc.setDigit(disp, start + 2, o, false);
+  } else if (t > 0) {
+    lc.setChar(disp, start, ' ', false);
+    lc.setDigit(disp, start + 1, t, false);
+    lc.setDigit(disp, start + 2, o, false);
+  } else {
+    lc.setChar(disp, start, ' ', false);
+    lc.setChar(disp, start + 1, ' ', false);
+    lc.setDigit(disp, start + 2, o, false);
+  }
 }
 
 void setup() {
@@ -63,29 +66,27 @@ void loop() {
   int tmpPos = line.indexOf("TMP ");
 
   if (cpuPos >= 0) {
-
-    lc.setRow(0,7,0x4E);
+    lc.setRow(0,7,0x4E); // C
     int v = parse3(line, cpuPos + 4);
-    if (v >= 0) show3(0, 6, 5, 4, v);
+    if (v >= 0) show3(0, 4, v); // start at digit 4
   }
 
   if (memPos >= 0) {
-
-    lc.setRow(0, 3, 0x46); // display 0, digit 3
+    lc.setRow(0,3,0x46); // R
     int v = parse3(line, memPos + 4);
-    if (v >= 0) show3(0, 2, 1, 0, v);
+    if (v >= 0) show3(0, 0, v); // start at digit 0
   }
 
   if (gpuPos >= 0) {
-    lc.setRow(1,3,0x3E);
-
+    lc.setRow(1,3,0x3E); // U
     int v = parse3(line, gpuPos + 4);
-    if (v >= 0) show3(1, 2, 1, 0, v);
+    if (v >= 0) show3(1, 0, v); // start at digit 0
   }
 
   if (tmpPos >= 0) {
-    lc.setChar(1, 7, 'H', false); 
+    lc.setChar(1,7,'H',false); // TEMP
     int v = parse3(line, tmpPos + 4);
-    if (v >= 0) show3(1, 6, 5, 4, v);
+    if (v >= 0) show3(1, 4, v); // start at digit 4
   }
+
 }
