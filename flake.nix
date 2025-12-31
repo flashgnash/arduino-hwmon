@@ -16,7 +16,7 @@
       systems = flake-utils.lib.defaultSystems;
     in
     {
-      # ---------- NixOS module (TOP-LEVEL, NOT per-system)
+      # ---------- NixOS module (TOP-LEVEL)
       nixosModules.default =
         {
           pkgs,
@@ -33,16 +33,21 @@
           config = lib.mkIf cfg.enable {
             systemd.services.hwmon = {
               description = "Arduino hwmon sender";
-              wantedBy = [ "multi-user.target" ];
 
-              bindsTo = [ "dev-ttyACM0.device" ];
-              after = [ "dev-ttyACM0.device" ];
+              bindsTo = [ "dev-arduino-hwmon.device" ];
+              after = [ "dev-arduino-hwmon.device" ];
+              wantedBy = [ "multi-user.target" ];
 
               serviceConfig = {
                 ExecStart = "${self.packages.${pkgs.system}.default}/bin/hwmon_sender";
                 Restart = "always";
+                RestartSec = 2;
               };
             };
+
+            services.udev.extraRules = ''
+              SUBSYSTEM=="tty", ATTRS{idVendor}=="XXXX", ATTRS{idProduct}=="YYYY", SYMLINK+="arduino-hwmon"
+            '';
           };
         };
     }
@@ -50,6 +55,13 @@
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+
+        buildPkgs = with pkgs; [
+          rustc
+          cargo
+          pkg-config
+          udev
+        ];
       in
       {
         # ---------- Package
@@ -64,19 +76,41 @@
           buildInputs = [ pkgs.udev ];
         };
 
-        # ---------- Dev shell
+        # ---------- Dev shell (RESTORED)
         devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.rustc
-            pkgs.cargo
-            pkgs.rustfmt
-            pkgs.rust-analyzer
-            pkgs.clippy
-            pkgs.pkg-config
-            pkgs.udev
-            pkgs.arduino-cli
+          nativeBuildInputs = with pkgs; [
+            pkg-config
           ];
 
+          buildInputs =
+            with pkgs;
+            [
+              rustfmt
+              rust-analyzer
+              clippy
+              arduino-cli
+              cachix
+
+              (pkgs.writeShellScriptBin "runArduino" ''
+                cd arduino
+                arduino-cli core install arduino:avr
+                arduino-cli lib install LedControl
+                arduino-cli compile -b arduino:avr:uno
+                arduino-cli upload -b arduino:avr:uno -p /dev/arduino-hwmon
+              '')
+
+              (pkgs.writeShellScriptBin "runSender" ''
+                cargo run
+              '')
+
+              (pkgs.writeShellScriptBin "run" ''
+                runArduino
+                runSender
+              '')
+            ]
+            ++ buildPkgs;
+
+          OUT_DIR = "./src/db";
           RUST_BACKTRACE = "full";
         };
       }
