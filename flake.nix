@@ -36,7 +36,7 @@
 
               bindsTo = [ "dev-arduino-hwmon.device" ];
               after = [ "dev-arduino-hwmon.device" ];
-              wantedBy = [ "dev-arduino-hwmon.device" ];
+              wantedBy = [ "multi-user.target" ];
 
               serviceConfig = {
                 ExecStart = "${self.packages.${pkgs.system}.default}/bin/hwmon_sender";
